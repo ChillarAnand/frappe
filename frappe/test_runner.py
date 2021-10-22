@@ -24,7 +24,7 @@ def xmlrunner_wrapper(output):
 
 def main(app=None, module=None, doctype=None, verbose=False, tests=(),
 	force=False, profile=False, junit_xml_output=None, ui_tests=False,
-	doctype_list_path=None, skip_test_records=False, failfast=False):
+	doctype_list_path=None, failfast=False, file=None):
 	global unittest_runner
 
 	if doctype_list_path:
@@ -69,7 +69,7 @@ def main(app=None, module=None, doctype=None, verbose=False, tests=(),
 		elif module:
 			ret = run_tests_for_module(module, verbose, tests, profile, failfast=failfast, junit_xml_output=junit_xml_output)
 		else:
-			ret = run_all_tests(app, verbose, profile, ui_tests, failfast=failfast, junit_xml_output=junit_xml_output)
+			ret = run_all_tests(app, verbose, profile, ui_tests, file=file, failfast=failfast, junit_xml_output=junit_xml_output)
 
 		if frappe.db: frappe.db.commit()
 
@@ -106,7 +106,7 @@ class TimeLoggingTestResult(unittest.TextTestResult):
 		super(TimeLoggingTestResult, self).addSuccess(test)
 
 
-def run_all_tests(app=None, verbose=False, profile=False, ui_tests=False, failfast=False, junit_xml_output=False):
+def run_all_tests(app=None, verbose=False, profile=False, ui_tests=False, file=None, failfast=False, junit_xml_output=False):
 	import os
 
 	apps = [app] if app else frappe.get_installed_apps()
@@ -124,6 +124,12 @@ def run_all_tests(app=None, verbose=False, profile=False, ui_tests=False, failfa
 
 			# print path
 			for filename in files:
+				if file:
+					full_path = os.path.join(path, filename)
+					if not(full_path == file or full_path.endswith(file)):
+						continue
+					_add_test(app, path, filename, verbose, test_suite, ui_tests)
+					break
 				if filename.startswith("test_") and filename.endswith(".py")\
 					and filename != 'test_runner.py':
 					# print filename[:-3]
